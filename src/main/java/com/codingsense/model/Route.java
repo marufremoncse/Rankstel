@@ -4,7 +4,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class Route {
-	private String url = "http://api.rankstelecom.com/api/v3/sendsms/json";
+	private String apiRoot = "http://api.rankstelecom.com";
 	private String userIdParam = "user";
 	private String passParam = "password";
 	private String msisdnParam = "GSM";
@@ -12,14 +12,14 @@ public class Route {
 	private String smsTextParam = "SMSText";
 	private String userIdValue;
 	private String passValue;
-	private String senderValue = "8809617600001";
+	private String senderValue = "";
 
-	public String getUrl() {
-		return url;
+	public String getApiRoot() {
+		return apiRoot;
 	}
 
-	public void setUrl(String url) {
-		this.url = url;
+	public void setApiRoot(String apiRoot) {
+		this.apiRoot = apiRoot;
 	}
 
 	public String getUserIdParam() {

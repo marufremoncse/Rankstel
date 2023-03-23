@@ -11,15 +11,18 @@ public class RequestPayload {
 	private String type;
 	private String longSMS;
 	private String dataCoding;
-	private boolean isUnicode;
+	private Boolean isUnicode;
 	private String unicode;
-	private boolean isFlash;
+	private Boolean isFlash;
 	private String flash;
-	private boolean islongSMS;
+	private Boolean islongSMS;
+
+	public RequestPayload() {
+	}
 
 	public RequestPayload(String username, String password, String msisdn, String cli, String message,
-			String clienttransid, String rn_code, String type, String longSMS, String dataCoding, boolean isUnicode,
-			String unicode, boolean isFlash, String flash, boolean islongSMS) {
+			String clienttransid, String rn_code, String type, String longSMS, String dataCoding, Boolean isUnicode,
+			String unicode, Boolean isFlash, String flash, Boolean islongSMS) {
 		super();
 		this.username = username;
 		this.password = password;
@@ -38,12 +41,32 @@ public class RequestPayload {
 		this.islongSMS = islongSMS;
 	}
 
-	public boolean isIslongSMS() {
+	public Boolean getIsUnicode() {
+		return isUnicode;
+	}
+
+	public void setIsUnicode(Boolean isUnicode) {
+		this.isUnicode = isUnicode;
+	}
+
+	public Boolean getIsFlash() {
+		return isFlash;
+	}
+
+	public void setIsFlash(Boolean isFlash) {
+		this.isFlash = isFlash;
+	}
+
+	public Boolean getIslongSMS() {
 		return islongSMS;
 	}
 
-	public void setIslongSMS(boolean islongSMS) {
+	public void setIslongSMS(Boolean islongSMS) {
 		this.islongSMS = islongSMS;
+	}
+
+	public boolean isIslongSMS() {
+		return islongSMS;
 	}
 
 	public String getUsername() {
@@ -130,10 +153,6 @@ public class RequestPayload {
 		return isUnicode;
 	}
 
-	public void setUnicode(boolean isUnicode) {
-		this.isUnicode = isUnicode;
-	}
-
 	public String getUnicode() {
 		return unicode;
 	}
@@ -144,10 +163,6 @@ public class RequestPayload {
 
 	public boolean isFlash() {
 		return isFlash;
-	}
-
-	public void setFlash(boolean isFlash) {
-		this.isFlash = isFlash;
 	}
 
 	public String getFlash() {

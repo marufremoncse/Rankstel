@@ -5,6 +5,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -13,6 +14,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -46,7 +48,7 @@ public class ApiController {
 		apiPayload.setPassword(requestPayload.getPassword());
 		apiPayload.setDataCoding(requestPayload.getDataCoding());
 		apiPayload.setGsm(requestPayload.getMsisdn().split(","));
-		apiPayload.setSender(route.getSenderValue());
+		apiPayload.setSender(requestPayload.getCli());
 		apiPayload.setText(requestPayload.getMessage());
 		apiPayload.setType(requestPayload.getType());
 		apiPayload.setValidityPeriod("48:00");
@@ -65,14 +67,16 @@ public class ApiController {
 		System.out.println("requestPayload.getIsLongSMS(): " + requestPayload.isIslongSMS());
 		if (requestPayload.isIslongSMS() == true) {
 			msg.put("type", "longSMS");
-			apiPayload.setText(requestPayload.getLongSMS());
+//			apiPayload.setText(requestPayload.getLongSMS());
 		}
+		System.out.println("I am here: " + requestPayload.isUnicode());
 		if (requestPayload.isUnicode() == true) {
 			msg.put("datacoding", "8");
-			apiPayload.setText(requestPayload.getUnicode());
+
+//			apiPayload.setText(requestPayload.getUnicode());
 		}
 		if (requestPayload.isFlash() == true) {
-			apiPayload.setText(requestPayload.getFlash());
+//			apiPayload.setText(requestPayload.getFlash());
 		}
 		msg.put("text", apiPayload.getText());
 		ArrayList<Object> ls = new ArrayList<>();
@@ -83,10 +87,6 @@ public class ApiController {
 			gsm.put("gsm", "88" + msisdn.trim());
 			String messageId = String.valueOf(apiPayload.getId() + i++);
 			gsm.put("messageId", messageId);
-			String ara[] = new String[2];
-			ara[0] = messageId;
-			ara[1] = messageId;
-			responseMsisdn.put(msisdn.trim(), ara);
 			ls.add(gsm);
 		}
 
@@ -107,7 +107,7 @@ public class ApiController {
 		statusInfo.put("statusCode", responsePayload.getStatusCode());
 		statusInfo.put("errordescription", responsePayload.getErrordescription());
 		statusInfo.put("clienttransid", responsePayload.getClienttransid());
-		statusInfo.put("messageIDs", responseMsisdn);
+		statusInfo.put("messageIDs", responsePayload.getMessageIDs());
 		responseMap.put("statusInfo", statusInfo);
 		return responseMap;
 	}
@@ -121,10 +121,9 @@ public class ApiController {
 		String SMS_RESPONSE = "";
 		String status = "";
 		long tm = System.currentTimeMillis();
-		String destination = "";
-		String messageid = "";
 		try {
-			URL url = new URL(route.getUrl());
+			String urlString = route.getApiRoot() + "/api/v3/sendsms/json";
+			URL url = new URL(urlString);
 			HttpURLConnection con = (HttpURLConnection) url.openConnection();
 			con.setRequestMethod("POST");
 			con.setRequestProperty("Content-Type", "application/json");
@@ -158,11 +157,17 @@ public class ApiController {
 
 			Iterator<JSONObject> iterator = jsonArray.iterator();
 
+			HashMap<String, String> responseMsisdn = new HashMap<>();
 			while (iterator.hasNext()) {
 				JSONObject r = iterator.next();
 
 				status = r.get("status").toString();
+				String destination = r.get("destination").toString();
+				String messageid = r.get("messageid").toString();
+
+				responseMsisdn.put(destination.substring(2), messageid);
 			}
+			responsePayload.setMessageIDs(responseMsisdn);
 
 			switch (status) {
 			case "0":
@@ -191,11 +196,56 @@ public class ApiController {
 
 		long tmt = System.currentTimeMillis();
 
-		st.setTrid(messageid);
+		st.setTrid(String.valueOf(apiPayload.getId()));
 		st.setStatus(status);
 		st.setTt(tmt - tm);
 
 		return responsePayload;
 	}
 
+	@GetMapping("/balance")
+	public String balanceCheck(@RequestBody RequestPayload requestPayload) {
+		System.out.println("REQUEST_PAYLOAD: " + requestPayload);
+
+		String encodeFormat = "UTF-8";
+		String response = "";
+		try {
+			String user = URLEncoder.encode("user", encodeFormat) + "="
+					+ URLEncoder.encode(requestPayload.getUsername(), encodeFormat);
+			String password = URLEncoder.encode("password", encodeFormat) + "="
+					+ URLEncoder.encode(requestPayload.getPassword(), encodeFormat);
+			String cmd = URLEncoder.encode("cmd", encodeFormat) + "=" + URLEncoder.encode("CREDITS", encodeFormat);
+
+			String urlString = route.getApiRoot() + "/api/command?" + user + "&" + password + "&" + cmd;
+			System.out.println("url: " + urlString);
+			URL url = new URL(urlString);
+			HttpURLConnection con = (HttpURLConnection) url.openConnection();
+			con.setDoOutput(true);
+			con.setConnectTimeout(20000);
+			con.setReadTimeout(20000);
+			con.setRequestMethod("GET");
+
+			int responseCode = con.getResponseCode();
+			System.out.println("GET Response Code :: " + responseCode);
+			if (responseCode == HttpURLConnection.HTTP_OK) { // success
+				BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+				String inputLine;
+				StringBuffer responseBuffer = new StringBuffer();
+
+				while ((inputLine = in.readLine()) != null) {
+					responseBuffer.append(inputLine);
+				}
+				in.close();
+
+				// print result
+				response = responseBuffer.toString();
+				System.out.println("response: " + response);
+			} else {
+				System.out.println("GET request did not work.");
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return response;
+	}
 }

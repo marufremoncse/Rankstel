@@ -1,18 +1,20 @@
 package com.codingsense.model;
 
+import java.util.HashMap;
+
 public class ResponsePayload {
 	private String statusInfo;
 	private String statusCode;
 	private String errordescription;
 	private String clienttransid;
-	private String messageIDs;
+	private HashMap<String, String> messageIDs;
 
 	public ResponsePayload() {
 		super();
 	}
 
 	public ResponsePayload(String statusInfo, String statusCode, String errordescription, String clienttransid,
-			String messageIDs) {
+			HashMap<String, String> messageIDs) {
 		super();
 		this.statusInfo = statusInfo;
 		this.statusCode = statusCode;
@@ -53,11 +55,11 @@ public class ResponsePayload {
 		this.clienttransid = clienttransid;
 	}
 
-	public String getMessageIDs() {
+	public HashMap<String, String> getMessageIDs() {
 		return messageIDs;
 	}
 
-	public void setMessageIDs(String messageIDs) {
+	public void setMessageIDs(HashMap<String, String> messageIDs) {
 		this.messageIDs = messageIDs;
 	}
 
