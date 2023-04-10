@@ -7,14 +7,14 @@ public class ResponsePayload {
 	private String statusCode;
 	private String errordescription;
 	private String clienttransid;
-	private HashMap<String, String> messageIDs;
+	private HashMap<String, String[]> messageIDs;
 
 	public ResponsePayload() {
 		super();
 	}
 
 	public ResponsePayload(String statusInfo, String statusCode, String errordescription, String clienttransid,
-			HashMap<String, String> messageIDs) {
+			HashMap<String, String[]> messageIDs) {
 		super();
 		this.statusInfo = statusInfo;
 		this.statusCode = statusCode;
@@ -55,11 +55,11 @@ public class ResponsePayload {
 		this.clienttransid = clienttransid;
 	}
 
-	public HashMap<String, String> getMessageIDs() {
+	public HashMap<String, String[]> getMessageIDs() {
 		return messageIDs;
 	}
 
-	public void setMessageIDs(HashMap<String, String> messageIDs) {
+	public void setMessageIDs(HashMap<String, String[]> messageIDs) {
 		this.messageIDs = messageIDs;
 	}
 

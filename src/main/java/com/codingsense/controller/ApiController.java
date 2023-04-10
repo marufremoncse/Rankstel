@@ -9,11 +9,13 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.NumberUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -36,23 +38,24 @@ public class ApiController {
 
 	@Autowired
 	ApiPayload apiPayload;
-
+			
 	@PostMapping({ "/promo/sendsms", "/trans/sendsms" })
 
 	public HashMap<String, Object> callProcess(@RequestBody RequestPayload requestPayload) {
 		System.out.println("REQUEST_PAYLOAD: " + requestPayload);
 
 		HashMap<String, Object> main = new HashMap<>();
-
+		
+		String[] requestMsisdnArray = requestPayload.getMsisdn().split(",");
 		apiPayload.setUsername(requestPayload.getUsername());
 		apiPayload.setPassword(requestPayload.getPassword());
 		apiPayload.setDataCoding(requestPayload.getDataCoding());
-		apiPayload.setGsm(requestPayload.getMsisdn().split(","));
+		apiPayload.setGsm(requestMsisdnArray);
 		apiPayload.setSender(requestPayload.getCli());
 		apiPayload.setText(requestPayload.getMessage());
 		apiPayload.setType(requestPayload.getType());
 		apiPayload.setValidityPeriod("48:00");
-
+		
 		System.out.println("API_PAYLOAD: " + apiPayload.toString());
 
 		HashMap<String, String> auth = new HashMap<>();
@@ -64,29 +67,25 @@ public class ApiController {
 		HashMap<String, Object> msg = new HashMap<>();
 		msg.put("sender", apiPayload.getSender());
 
-		System.out.println("requestPayload.getIsLongSMS(): " + requestPayload.isIslongSMS());
-		if (requestPayload.isIslongSMS() == true) {
+		if (requestPayload.isIsLongSMS() == true) {
 			msg.put("type", "longSMS");
-//			apiPayload.setText(requestPayload.getLongSMS());
+			//apiPayload.setText(requestPayload.getLongSMS());
 		}
-		System.out.println("I am here: " + requestPayload.isUnicode());
 		if (requestPayload.isUnicode() == true) {
 			msg.put("datacoding", "8");
-
-//			apiPayload.setText(requestPayload.getUnicode());
+			//apiPayload.setText(requestPayload.getUnicode());
 		}
 		if (requestPayload.isFlash() == true) {
-//			apiPayload.setText(requestPayload.getFlash());
+			//apiPayload.setText(requestPayload.getFlash());
 		}
 		msg.put("text", apiPayload.getText());
 		ArrayList<Object> ls = new ArrayList<>();
 		int i = 0;
-		HashMap<String, String[]> responseMsisdn = new HashMap<>();
 		for (String msisdn : apiPayload.getGsm()) {
 			HashMap<String, String> gsm = new HashMap<>();
-			gsm.put("gsm", "88" + msisdn.trim());
-			String messageId = String.valueOf(apiPayload.getId() + i++);
-			gsm.put("messageId", messageId);
+			gsm.put("gsm", "880" + msisdn.trim().substring(msisdn.trim().length()-10));
+//			String messageId = String.valueOf(apiPayload.getId() + i++);
+//			gsm.put("messageId", messageId);
 			ls.add(gsm);
 		}
 
@@ -99,16 +98,32 @@ public class ApiController {
 
 		ResponsePayload responsePayload = new ResponsePayload();
 		responsePayload.setClienttransid(requestPayload.getClienttransid());
-		responsePayload = process(apiPayload, responsePayload, main, route);
+		HashMap<String, String> rnCodeMap = new HashMap<>();
+		rnCodeMap.put("88016", "81");
+		rnCodeMap.put("88018", "81");
+		rnCodeMap.put("88019", "91");
+		rnCodeMap.put("88014", "91");
+		rnCodeMap.put("88017", "71");
+		rnCodeMap.put("88013", "71");
+		rnCodeMap.put("88015", "51");
+		
+		LinkedHashMap<String, Object> responseMap = new LinkedHashMap<>();
+		LinkedHashMap<String, Object> statusInfo = new LinkedHashMap<>();
+		
+		if(!requestPayload.getCli().toString().substring(0, 2).equals("88") || !rnCodeMap.get(requestMsisdnArray[0].trim().substring(0, 5)).equals(requestPayload.getRn_code())) {
+			statusInfo.put("statusCode", "1005");
+			statusInfo.put("errordescription", "Invalid Parameter");
+		} else {
+			
+			responsePayload = process(apiPayload, responsePayload, main, route);	
+			statusInfo.put("statusCode", responsePayload.getStatusCode());
+			statusInfo.put("errordescription", responsePayload.getErrordescription());
+		}
 
-		HashMap<String, Object> responseMap = new HashMap<>();
-		HashMap<String, Object> statusInfo = new HashMap<>();
-
-		statusInfo.put("statusCode", responsePayload.getStatusCode());
-		statusInfo.put("errordescription", responsePayload.getErrordescription());
 		statusInfo.put("clienttransid", responsePayload.getClienttransid());
 		statusInfo.put("messageIDs", responsePayload.getMessageIDs());
 		responseMap.put("statusInfo", statusInfo);
+		
 		return responseMap;
 	}
 
@@ -157,15 +172,16 @@ public class ApiController {
 
 			Iterator<JSONObject> iterator = jsonArray.iterator();
 
-			HashMap<String, String> responseMsisdn = new HashMap<>();
+			HashMap<String, String[]> responseMsisdn = new HashMap<>();
 			while (iterator.hasNext()) {
 				JSONObject r = iterator.next();
 
 				status = r.get("status").toString();
 				String destination = r.get("destination").toString();
 				String messageid = r.get("messageid").toString();
-
-				responseMsisdn.put(destination.substring(2), messageid);
+				String[] ara = new String[1];
+				ara[0] = messageid;
+				responseMsisdn.put(destination, ara);
 			}
 			responsePayload.setMessageIDs(responseMsisdn);
 
@@ -182,6 +198,18 @@ public class ApiController {
 				responsePayload.setStatusCode("1002");
 				responsePayload.setErrordescription("Invalid Username");
 				break;
+			case "-13":
+				responsePayload.setStatusCode("1010");
+				responsePayload.setErrordescription("Invalid MSISDN");
+				break;
+			case "-33":
+				responsePayload.setStatusCode("1011");
+				responsePayload.setErrordescription("Duplicate Transaction ID");
+				break;
+			case "-34":
+				responsePayload.setStatusCode("1006");
+				responsePayload.setErrordescription("CLI/Masking Invalid");
+				break;
 			default:
 				responsePayload.setStatusCode("1020");
 				responsePayload.setErrordescription("Internal Server Error");
@@ -189,8 +217,8 @@ public class ApiController {
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
-			responsePayload.setStatusCode("1020");
-			responsePayload.setErrordescription("Internal Server Error");
+			responsePayload.setStatusCode("1015");
+			responsePayload.setErrordescription("TPS Limit Exceeded");
 			responsePayload.setMessageIDs(null);
 		}
 
@@ -204,11 +232,13 @@ public class ApiController {
 	}
 
 	@GetMapping("/balance")
-	public String balanceCheck(@RequestBody RequestPayload requestPayload) {
+	public HashMap<String, Object> balanceCheck(@RequestBody RequestPayload requestPayload) {
 		System.out.println("REQUEST_PAYLOAD: " + requestPayload);
 
 		String encodeFormat = "UTF-8";
 		String response = "";
+		LinkedHashMap<String, Object> responseMap = new LinkedHashMap<>();
+		LinkedHashMap<String, Object> statusInfo = new LinkedHashMap<>();
 		try {
 			String user = URLEncoder.encode("user", encodeFormat) + "="
 					+ URLEncoder.encode(requestPayload.getUsername(), encodeFormat);
@@ -240,12 +270,31 @@ public class ApiController {
 				// print result
 				response = responseBuffer.toString();
 				System.out.println("response: " + response);
+				
+				
+				statusInfo.put("statusCode", "1000");
+				statusInfo.put("errordescription", "Success");
+				statusInfo.put("clienttransid", requestPayload.getClienttransid());
+				double d = Double.parseDouble(response);
+				if(d>=0) {
+					statusInfo.put("availablebalance", response);
+				} else {
+					statusInfo.put("availablebalance", null);
+				}
+				
+				responseMap.put("statusInfo", statusInfo);
+				
 			} else {
 				System.out.println("GET request did not work.");
 			}
 		} catch (Exception e) {
+			statusInfo.put("statusCode", "1020");
+			statusInfo.put("errordescription", "Internal Server Error");
+			statusInfo.put("clienttransid", requestPayload.getClienttransid());
+			statusInfo.put("availablebalance", null);
+			responseMap.put("statusInfo", statusInfo);
 			e.printStackTrace();
 		}
-		return response;
+		return responseMap;
 	}
 }

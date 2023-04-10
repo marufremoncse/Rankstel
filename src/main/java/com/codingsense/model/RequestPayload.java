@@ -15,14 +15,14 @@ public class RequestPayload {
 	private String unicode;
 	private Boolean isFlash;
 	private String flash;
-	private Boolean islongSMS;
+	private Boolean isLongSMS;
 
 	public RequestPayload() {
 	}
 
 	public RequestPayload(String username, String password, String msisdn, String cli, String message,
 			String clienttransid, String rn_code, String type, String longSMS, String dataCoding, Boolean isUnicode,
-			String unicode, Boolean isFlash, String flash, Boolean islongSMS) {
+			String unicode, Boolean isFlash, String flash, Boolean isLongSMS) {
 		super();
 		this.username = username;
 		this.password = password;
@@ -38,7 +38,7 @@ public class RequestPayload {
 		this.unicode = unicode;
 		this.isFlash = isFlash;
 		this.flash = flash;
-		this.islongSMS = islongSMS;
+		this.isLongSMS = isLongSMS;
 	}
 
 	public Boolean getIsUnicode() {
@@ -57,16 +57,16 @@ public class RequestPayload {
 		this.isFlash = isFlash;
 	}
 
-	public Boolean getIslongSMS() {
-		return islongSMS;
+	public Boolean getIsLongSMS() {
+		return isLongSMS;
 	}
 
-	public void setIslongSMS(Boolean islongSMS) {
-		this.islongSMS = islongSMS;
+	public void setIslongSMS(Boolean isLongSMS) {
+		this.isLongSMS = isLongSMS;
 	}
 
-	public boolean isIslongSMS() {
-		return islongSMS;
+	public boolean isIsLongSMS() {
+		return isLongSMS;
 	}
 
 	public String getUsername() {
@@ -178,7 +178,7 @@ public class RequestPayload {
 		return "RequestPayload [username=" + username + ", password=" + password + ", msisdn=" + msisdn + ", cli=" + cli
 				+ ", message=" + message + ", clienttransid=" + clienttransid + ", rn_code=" + rn_code + ", type="
 				+ type + ", longSMS=" + longSMS + ", dataCoding=" + dataCoding + ", isUnicode=" + isUnicode
-				+ ", unicode=" + unicode + ", isFlash=" + isFlash + ", flash=" + flash + ", isLongSMS=" + islongSMS
+				+ ", unicode=" + unicode + ", isFlash=" + isFlash + ", flash=" + flash + ", isLongSMS=" + isLongSMS
 				+ "]";
 	}
 
